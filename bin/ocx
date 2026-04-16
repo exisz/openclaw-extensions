@@ -1,0 +1,46 @@
+#!/bin/sh
+OCX_CODE="$(cd "$(dirname "$0")/.." && pwd)"
+
+subcmd="${1:-help}"
+shift 2>/dev/null
+
+case "$subcmd" in
+  cron)
+    cron_subcmd="${1:-help}"
+    shift 2>/dev/null
+    case "$cron_subcmd" in
+      up)
+        exec node --experimental-strip-types "$OCX_CODE/scripts/cron-up.ts" "$@"
+        ;;
+      down)
+        exec node --experimental-strip-types "$OCX_CODE/scripts/cron-down.ts" "$@"
+        ;;
+      link)
+        exec node --experimental-strip-types "$OCX_CODE/scripts/cron-link.ts" "$@"
+        ;;
+      help|--help|-h)
+        echo "⏰ ocx cron — Cron frequency management"
+        echo ""
+        echo "  ocx cron up <cron_id>                   Increase frequency one tier"
+        echo "  ocx cron down <cron_id>                 Decrease frequency one tier"
+        echo "  ocx cron link <follower> <source> <mult> Sync linked cron"
+        ;;
+      *)
+        echo "Unknown cron subcommand: $cron_subcmd" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  help|--help|-h)
+    echo "🦞 ocx — OpenClaw Extensions"
+    echo ""
+    echo "Usage: ocx <subcommand> [args]"
+    echo ""
+    echo "Subcommands:"
+    echo "  cron    Cron frequency management (up/down/link)"
+    ;;
+  *)
+    echo "Unknown subcommand: $subcmd" >&2
+    exit 1
+    ;;
+esac

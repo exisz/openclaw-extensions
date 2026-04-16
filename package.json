@@ -1,6 +1,6 @@
 {
   "name": "openclaw-extensions",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI utilities for OpenClaw — cron frequency management, adaptive scheduling, and operational tools",
   "license": "Apache-2.0",
   "repository": {
@@ -10,7 +10,18 @@
   "bin": {
     "ocx": "./bin/ocx"
   },
-  "files": ["bin", "scripts"],
-  "keywords": ["openclaw", "cli", "cron", "scheduling", "agent-framework"],
-  "engines": { "node": ">=18" }
+  "files": [
+    "bin",
+    "scripts"
+  ],
+  "keywords": [
+    "openclaw",
+    "cli",
+    "cron",
+    "scheduling",
+    "agent-framework"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }

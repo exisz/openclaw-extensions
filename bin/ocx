@@ -1,5 +1,12 @@
 #!/bin/sh
-OCX_CODE="$(cd "$(dirname "$0")/.." && pwd)"
+# Resolve symlinks to find the real install location
+SOURCE="$0"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  case "$SOURCE" in /*) ;; *) SOURCE="$DIR/$SOURCE" ;; esac
+done
+OCX_CODE="$(cd "$(dirname "$SOURCE")/.." && pwd)"
 
 subcmd="${1:-help}"
 shift 2>/dev/null

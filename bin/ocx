@@ -25,12 +25,16 @@ case "$subcmd" in
       link)
         exec node --experimental-strip-types "$OCX_CODE/scripts/cron-link.ts" "$@"
         ;;
+      investigate)
+        exec node --experimental-strip-types "$OCX_CODE/scripts/cron-investigate.ts" "$@"
+        ;;
       help|--help|-h)
-        echo "⏰ ocx cron — Cron frequency management"
+        echo "⏰ ocx cron — Cron operations"
         echo ""
         echo "  ocx cron up <cron_id>                   Increase frequency one tier"
         echo "  ocx cron down <cron_id>                 Decrease frequency one tier"
         echo "  ocx cron link <follower> <source> <mult> Sync linked cron"
+        echo "  ocx cron investigate --agent <id>       Investigate cron session history"
         ;;
       *)
         echo "Unknown cron subcommand: $cron_subcmd" >&2

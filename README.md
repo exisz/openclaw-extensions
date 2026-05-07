@@ -19,7 +19,40 @@ ocx cron down <cron_id> [--step N]
 
 # Sync linked cron frequency (follower = source × multiplier)
 ocx cron link <follower_id> <source_id> <multiplier>
+
+# Diagnose model call failures for an agent or channel session
+ocx model-debug --agent <id>
+ocx model-debug --agent <id> --channel <discord_channel_id>
+ocx model-debug --agent <id> --last <n>   # default: 5
+ocx model-debug --session <trajectory-file-path-or-id-fragment>
+
+# Validate OpenClaw config — catch bad model refs before they fail at runtime
+ocx doctor
+ocx doctor --fix   # auto-remove invalid per-agent model overrides
 ```
+
+### `ocx model-debug`
+
+Inspects trajectory files and gateway logs to surface the root cause when an agent silently fails or falls back unexpectedly. Useful when a model switch (e.g. via Discord model picker) breaks an agent and there is no visible error.
+
+Checks:
+- `stopReason: error` + `errorMessage` in trajectory `messagesSnapshot`
+- Zero-token calls (model fired but produced nothing)
+- Fallback activations
+- Discord model-picker selection history
+- `gateway.err.log` snippets around the failure time
+
+If no trajectory is found for the given channel, falls back to scanning `gateway.err.log` to identify which agent owns that channel.
+
+### `ocx doctor`
+
+Validates model references in `openclaw.json` that `openclaw doctor` does not check (see [openclaw/openclaw#39811](https://github.com/openclaw/openclaw/issues/39811)):
+
+- Per-agent `model` overrides are known model IDs (present in `agents.defaults.models`)
+- Bare `"default"` strings — these resolve to `openai/default` which does not exist and will always fail at runtime
+- Primary model and all fallbacks in `agents.defaults.model`
+
+`--fix` automatically removes invalid per-agent `model` fields so they inherit the global default.
 
 ## Frequency Tiers
 

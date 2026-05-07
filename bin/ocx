@@ -17,16 +17,16 @@ case "$subcmd" in
     shift 2>/dev/null
     case "$cron_subcmd" in
       up)
-        exec node --experimental-strip-types "$OCX_CODE/scripts/cron-up.ts" "$@"
+        exec node "$OCX_CODE/dist/cron-up.js" "$@"
         ;;
       down)
-        exec node --experimental-strip-types "$OCX_CODE/scripts/cron-down.ts" "$@"
+        exec node "$OCX_CODE/dist/cron-down.js" "$@"
         ;;
       link)
-        exec node --experimental-strip-types "$OCX_CODE/scripts/cron-link.ts" "$@"
+        exec node "$OCX_CODE/dist/cron-link.js" "$@"
         ;;
       investigate)
-        exec node --experimental-strip-types "$OCX_CODE/scripts/cron-investigate.ts" "$@"
+        exec node "$OCX_CODE/dist/cron-investigate.js" "$@"
         ;;
       help|--help|-h)
         echo "⏰ ocx cron — Cron operations"
@@ -43,10 +43,10 @@ case "$subcmd" in
     esac
     ;;
   model-debug)
-    exec node --experimental-strip-types "$OCX_CODE/scripts/model-debug.ts" "$@"
+    exec node "$OCX_CODE/dist/model-debug.js" "$@"
     ;;
   doctor)
-    exec node --experimental-strip-types "$OCX_CODE/scripts/doctor.ts" "$@"
+    exec node "$OCX_CODE/dist/doctor.js" "$@"
     ;;
   help|--help|-h)
     echo "🦞 ocx — OpenClaw Extensions"

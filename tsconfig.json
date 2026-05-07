@@ -6,7 +6,12 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "dist"
+    "types": ["node"],
+    "outDir": "dist",
+    "rootDir": "scripts",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
   },
   "include": ["scripts"]
 }

@@ -42,13 +42,17 @@ case "$subcmd" in
         ;;
     esac
     ;;
+  model-debug)
+    exec node --experimental-strip-types "$OCX_CODE/scripts/model-debug.ts" "$@"
+    ;;
   help|--help|-h)
     echo "🦞 ocx — OpenClaw Extensions"
     echo ""
     echo "Usage: ocx <subcommand> [args]"
     echo ""
     echo "Subcommands:"
-    echo "  cron    Cron frequency management (up/down/link)"
+    echo "  cron         Cron frequency management (up/down/link)"
+    echo "  model-debug  Diagnose model call failures for an agent/channel"
     ;;
   *)
     echo "Unknown subcommand: $subcmd" >&2

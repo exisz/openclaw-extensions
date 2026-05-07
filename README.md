@@ -2,6 +2,11 @@
 
 CLI utilities for [OpenClaw](https://github.com/nicepkg/openclaw) — cron frequency management, adaptive scheduling, and operational tools.
 
+## Use without installing
+```
+npx openclaw-extensions doctor
+```
+
 ## Install
 
 ```bash

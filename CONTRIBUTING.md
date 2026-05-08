@@ -18,9 +18,15 @@ No build step needed — scripts run directly via `node --experimental-strip-typ
 2. Create a feature branch (`git checkout -b feat/my-feature`)
 3. Make your changes
 4. **Update README.md** — every new `ocx` subcommand must be documented in the Usage section
-5. Test locally: `ocx --help` and the new command's `--help`
-6. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
-7. Open a Pull Request
+5. **Build and test locally:**
+   ```bash
+   npm run build
+   ocx --help
+   ocx <your-command> --help
+   ```
+6. **Commit `dist/` together with your source changes** — `dist/` is tracked in git so npx users get the compiled output without a build step
+7. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
+8. Open a Pull Request
 
 ## Commit Convention
 

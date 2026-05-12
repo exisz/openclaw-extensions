@@ -1,6 +1,6 @@
 {
   "name": "openclaw-extensions",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "CLI utilities for OpenClaw — cron frequency management, adaptive scheduling, and operational tools",
   "license": "Apache-2.0",
   "type": "module",

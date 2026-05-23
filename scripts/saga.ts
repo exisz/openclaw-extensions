@@ -141,7 +141,7 @@ function runningStatesForSaga(sagaId: string): SagaState[] {
     .map((f) => {
       try { return JSON.parse(readFileSync(join(RUN_DIR, f), "utf-8")) as SagaState; } catch { return undefined; }
     })
-    .filter((s): s is SagaState => !!s && s.saga_id === sagaId && s.status === "running")
+    .filter((s): s is SagaState => !!s && s.saga_id === sagaId && s.status === "running" && !s.run_id.startsWith("test-"))
     .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
 }
 function formatContract(st: Stage): string {

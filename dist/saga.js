@@ -110,7 +110,7 @@ function runningStatesForSaga(sagaId) {
             return undefined;
         }
     })
-        .filter((s) => !!s && s.saga_id === sagaId && s.status === "running")
+        .filter((s) => !!s && s.saga_id === sagaId && s.status === "running" && !s.run_id.startsWith("test-"))
         .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
 }
 function formatContract(st) {

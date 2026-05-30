@@ -7,6 +7,8 @@
  *   ocx cron investigate --agent <id> --last <n>
  *   ocx cron investigate --agent <id> --last <n> --errors-only
  *   ocx cron investigate --agent <id> --session <sessionId>
+ *   ocx cron investigate --agent <id> --session <sessionId>          # compact index (default)
+ *   ocx cron investigate --agent <id> --session <sessionId> --details
  *   ocx cron investigate --agent <id> --session <sessionId> --full
  *   ocx cron investigate --agent <id> --session <sessionId> --range 8-12
  */
@@ -28,16 +30,18 @@ const last = getFlag('--last') || '10';
 const sessionId = getFlag('--session');
 const errorsOnly = args.includes('--errors-only');
 const full = args.includes('--full');
+const details = args.includes('--details');
 const range = getFlag('--range');
 
 function usage(): void {
-  console.error('Usage: ocx cron investigate --agent <agentId> [--last <n>] [--errors-only] [--session <sessionId>] [--full] [--range <n|n-m>]');
+  console.error('Usage: ocx cron investigate --agent <agentId> [--last <n>] [--errors-only] [--session <sessionId>] [--details] [--full] [--range <n|n-m>]');
   console.error('');
   console.error('Options:');
   console.error('  --agent <id>      Agent id (required)');
   console.error('  --last <n>        Number of recent runs to show (default: 10)');
   console.error('  --errors-only     Filter overview to error runs');
-  console.error('  --session <sid>   Show sanitized session tool/text chain (prefix ok)');
+  console.error('  --session <sid>   Show compact session index (prefix ok)');
+  console.error('  --details         Show sanitized session text/tool chain (truncated)');
   console.error('  --full            Do not truncate session text/tool results');
   console.error('  --range <n|n-m>   Show only session entries in this 1-based range');
 }
@@ -79,51 +83,104 @@ function findSessionFile(agent: string, sid: string): string | undefined {
   return prefixed ? join(dir, prefixed) : undefined;
 }
 
-function contentText(content: any[], limit: number): string | undefined {
+function rawText(content: any[]): string | undefined {
   const parts = content
     .filter((c) => c?.type === 'text')
     .map((c) => c.text)
     .filter(Boolean);
   if (!parts.length) return undefined;
-  return clip(parts.join('\n'), limit).replace(/\n/g, '\n   ');
+  return parts.join('\n');
+}
+
+function contentText(content: any[], limit: number): string | undefined {
+  const text = rawText(content);
+  if (!text) return undefined;
+  return clip(text, limit).replace(/\n/g, '\n   ');
+}
+
+function oneLine(value: unknown, limit: number): string {
+  return clip(value, limit).replace(/\s+/g, ' ').trim();
+}
+
+type DisplayItem = {
+  kind: 'USER' | 'ASSISTANT' | 'TOOL CALL' | 'TOOL RESULT';
+  name?: string;
+  text: string;
+  chars: number;
+};
+
+function buildDisplayItems(obj: any): DisplayItem[] {
+  if (obj.type !== 'message') return [];
+  const msg = obj.message || {};
+  const role = msg.role;
+  const content = Array.isArray(msg.content) ? msg.content : [];
+  const displayItems: DisplayItem[] = [];
+
+  if (role === 'user') {
+    const text = rawText(content);
+    if (text) displayItems.push({ kind: 'USER', text, chars: text.length });
+  } else if (role === 'assistant') {
+    for (const c of content) {
+      if (c?.type === 'toolCall') {
+        const text = typeof c.arguments === 'string' ? c.arguments : JSON.stringify(c.arguments || {});
+        displayItems.push({ kind: 'TOOL CALL', name: c.name, text, chars: text.length });
+      }
+      if (c?.type === 'text' && c.text) {
+        displayItems.push({ kind: 'ASSISTANT', text: c.text, chars: c.text.length });
+      }
+    }
+  } else if (role === 'toolResult') {
+    const name = obj.toolName || msg.toolName || 'toolResult';
+    const text = rawText(content) || JSON.stringify(content);
+    displayItems.push({ kind: 'TOOL RESULT', name, text, chars: text.length });
+  }
+
+  return displayItems;
+}
+
+function printCompactItem(entryNo: number, item: DisplayItem): void {
+  const label = item.name ? `${item.kind} ${item.name}` : item.kind;
+  const line = oneLine(item.text, item.kind === 'TOOL RESULT' ? 180 : 220);
+  const suffix = item.chars > line.length ? ` (${item.chars} chars)` : '';
+  console.log(`${String(entryNo).padStart(3, ' ')}. ${label}: ${line}${suffix}`);
+}
+
+function printDetailedItem(entryNo: number, item: DisplayItem): void {
+  const label = item.name ? `${item.kind} ${item.name}` : item.kind;
+  const limit = item.kind === 'TOOL CALL' ? 300 : item.kind === 'USER' ? 500 : 700;
+  const text = clip(item.text, limit).replace(/\n/g, '\n   ');
+  console.log(`${String(entryNo).padStart(3, ' ')}. ${label} ${text}`);
+  console.log('');
 }
 
 function printSessionHistory(agent: string, sid: string): boolean {
   const file = findSessionFile(agent, sid);
   if (!file) return false;
   const wanted = parseRange(range);
+  const compact = !details && !full && !wanted;
   const lines = readFileSync(file, 'utf-8').split('\n').filter(Boolean);
   let entryNo = 0;
   console.log(`📋 Session: ${sid}`);
   console.log(`   File: ${file}`);
-  console.log('   输出已过滤 reasoning/thinking，仅显示 user/assistant 文本、toolCall、toolResult。\n');
+  if (compact) {
+    console.log('   Compact index: reasoning/thinking hidden; tool results are one-line previews.');
+    console.log('   Drill down with: ocx cron investigate --agent <id> --session <sid> --range N-M [--full]\n');
+  } else {
+    console.log('   输出已过滤 reasoning/thinking，仅显示 user/assistant 文本、toolCall、toolResult。\n');
+  }
+
   for (const line of lines) {
     let obj: any;
     try { obj = JSON.parse(line); } catch { continue; }
-    if (obj.type !== 'message') continue;
-    const msg = obj.message || {};
-    const role = msg.role;
-    const content = Array.isArray(msg.content) ? msg.content : [];
-    const displayItems: string[] = [];
-    if (role === 'user') {
-      const text = contentText(content, 500);
-      if (text) displayItems.push(`USER ${text}`);
-    } else if (role === 'assistant') {
-      for (const c of content) {
-        if (c?.type === 'toolCall') displayItems.push(`TOOL CALL ${c.name} ${clip(c.arguments || {}, 300).replace(/\n/g, ' ')}`);
-        if (c?.type === 'text' && c.text) displayItems.push(`ASSISTANT ${clip(c.text, 700).replace(/\n/g, '\n   ')}`);
-      }
-    } else if (role === 'toolResult') {
-      const name = obj.toolName || msg.toolName || 'toolResult';
-      const text = contentText(content, 700) || clip(content, 700).replace(/\n/g, '\n   ');
-      displayItems.push(`TOOL RESULT ${name} ${text}`);
-    }
-    for (const item of displayItems) {
+    for (const item of buildDisplayItems(obj)) {
       entryNo += 1;
       if (wanted && (entryNo < wanted[0] || entryNo > wanted[1])) continue;
-      console.log(`${String(entryNo).padStart(3, ' ')}. ${item}`);
-      console.log('');
+      if (compact) printCompactItem(entryNo, item);
+      else printDetailedItem(entryNo, item);
     }
+  }
+  if (compact) {
+    console.log(`\nTotal display entries: ${entryNo}`);
   }
   return true;
 }

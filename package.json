@@ -1,7 +1,7 @@
 {
   "name": "openclaw-extensions",
-  "version": "0.5.2",
-  "description": "CLI utilities for OpenClaw — cron frequency management, adaptive scheduling, and operational tools",
+  "version": "0.5.3",
+  "description": "CLI utilities and plugin extensions for OpenClaw — prompt injections, model selection, cron frequency management, adaptive scheduling, and operational tools",
   "license": "Apache-2.0",
   "type": "module",
   "repository": {
@@ -11,9 +11,19 @@
   "bin": {
     "ocx": "./bin/ocx"
   },
+  "main": "./dist/openclaw-plugin.js",
+  "types": "./dist/openclaw-plugin.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/openclaw-plugin.d.ts",
+      "import": "./dist/openclaw-plugin.js"
+    }
+  },
   "files": [
     "bin",
-    "dist"
+    "dist",
+    "injections",
+    "openclaw.plugin.json"
   ],
   "scripts": {
     "build": "tsc",
@@ -21,6 +31,7 @@
   },
   "keywords": [
     "openclaw",
+    "plugin",
     "cli",
     "cron",
     "scheduling",
@@ -28,6 +39,14 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/openclaw-plugin.js"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.3.28"
+    }
   },
   "devDependencies": {
     "@types/node": "^25.6.2",

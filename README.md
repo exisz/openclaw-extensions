@@ -13,6 +13,16 @@ npx openclaw-extensions doctor
 npm install -g openclaw-extensions
 ```
 
+To load the OpenClaw prompt-injection plugin as well:
+
+```bash
+npm run build
+openclaw plugins install .
+openclaw gateway restart
+```
+
+The CLI can be installed without enabling the plugin.
+
 ## Usage
 
 ```bash
@@ -58,6 +68,38 @@ Validates model references in `openclaw.json` that `openclaw doctor` does not ch
 - Primary model and all fallbacks in `agents.defaults.model`
 
 `--fix` automatically removes invalid per-agent `model` fields so they inherit the global default.
+
+## OpenClaw Plugin
+
+The plugin registers a `before_prompt_build` hook and appends matching prompt
+injections inside an `<ocx>` system-context block.
+
+Injection files use Markdown frontmatter:
+
+```markdown
+---
+id: subagent-model
+trigger: interactive
+---
+
+When spawning subagents, use "{{ocx model subagent --tier high}}".
+```
+
+Supported triggers are `always`, `interactive`, `cron`, and `subagent`.
+Later directories override earlier files with the same `id`:
+
+1. Package defaults: `injections/`
+2. Legacy user overrides: `~/.openclaw/ocx/injections/`
+3. Current user overrides: `~/.openclaw/.ocx/injections/`
+
+The plugin expands `{{ocx model subagent --tier <name>}}` using the weighted
+policy in `~/.openclaw/.ocx/model-policy.json`. The `ocx model` command uses
+the same policy:
+
+```bash
+ocx model subagent --tier high
+ocx model subagent --tier low --format json
+```
 
 ## Frequency Tiers
 

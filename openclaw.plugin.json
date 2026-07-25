@@ -1,0 +1,11 @@
+{
+  "id": "openclaw-extensions",
+  "name": "OpenClaw Extensions",
+  "description": "OpenClaw-specific global prompt injections and operational helpers.",
+  "version": "0.5.3",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

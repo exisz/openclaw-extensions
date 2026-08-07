@@ -44,6 +44,12 @@ ocx model-debug --session <trajectory-file-path-or-id-fragment>
 # Validate OpenClaw config — catch bad model refs before they fail at runtime
 ocx doctor
 ocx doctor --fix   # auto-remove invalid per-agent model overrides
+
+# Merge all $include files into openclaw.json (with an automatic backup)
+ocx config merge [--config ~/.openclaw/openclaw.json] [--dry-run]
+
+# Split agents and bindings back into agents.json5 / bindings.json5
+ocx config split [--config ~/.openclaw/openclaw.json] [--dry-run]
 ```
 
 ### `ocx model-debug`

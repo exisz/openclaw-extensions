@@ -17,6 +17,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
       - run: node --experimental-strip-types scripts/cron-up.ts --help
       - run: node --experimental-strip-types scripts/cron-down.ts --help
       - run: node --experimental-strip-types scripts/cron-link.ts --help

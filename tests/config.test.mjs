@@ -47,7 +47,9 @@ test("merge rejects a concurrently changed include file", () => {
   assert.throws(() => assertIncludeFilesUnchanged({ [included]: expected }), /changed concurrently/);
 });
 
-test("CLI merge/split preserves authored env refs and SecretRef objects", () => {
+const hasOpenClaw = spawnSync("openclaw", ["--version"], { encoding: "utf8" }).status === 0;
+
+test("CLI merge/split preserves authored env refs and SecretRef objects", { skip: !hasOpenClaw && "OpenClaw is not installed" }, () => {
   const dir = mkdtempSync(join(tmpdir(), "ocx-config-test-"));
   const config = join(dir, "openclaw.json");
   writeFileSync(join(dir, "agents.json5"), '{defaults:{workspace:"/tmp"},list:[{id:"main"}]}\n');

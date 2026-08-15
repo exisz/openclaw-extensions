@@ -41,6 +41,10 @@ ocx model-debug --agent <id> --channel <discord_channel_id>
 ocx model-debug --agent <id> --last <n>   # default: 5
 ocx model-debug --session <trajectory-file-path-or-id-fragment>
 
+# Quickly compare the subagent policy with models currently exposed by OpenClaw
+ocx model check
+ocx model check --format json
+
 # Validate OpenClaw config — catch bad model refs before they fail at runtime
 ocx doctor
 ocx doctor --fix   # auto-remove invalid per-agent model overrides
@@ -105,7 +109,13 @@ the same policy:
 ```bash
 ocx model subagent --tier high
 ocx model subagent --tier low --format json
+ocx model check
 ```
+
+`ocx model check` reads `openclaw models list --json`, prints the current
+OpenClaw default, and exits non-zero if any model referenced by the weighted
+subagent policy is unavailable. Use it after model/provider upgrades before
+starting new agent sessions.
 
 ## Frequency Tiers
 

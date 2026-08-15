@@ -1,6 +1,6 @@
 {
   "name": "openclaw-extensions",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "CLI utilities and plugin extensions for OpenClaw — prompt injections, model selection, cron frequency management, adaptive scheduling, and operational tools",
   "license": "Apache-2.0",
   "type": "module",

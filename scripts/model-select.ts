@@ -1,6 +1,30 @@
 #!/usr/bin/env node
 import { pathToFileURL } from "node:url";
+import { execFileSync } from "node:child_process";
 import { loadModelPolicy, OCX_MODEL_POLICY_PATH, type ModelWeight } from "./workspace.js";
+
+type OpenClawModel = { key?: string; available?: boolean; missing?: boolean; tags?: string[] };
+
+export function checkModelPolicy(models: OpenClawModel[]): {
+  configured: string[];
+  unavailable: string[];
+  defaultModel?: string;
+} {
+  const policy = loadModelPolicy();
+  const configured = [...new Set(Object.values(policy.subagent).flat().map(([model]) => model))];
+  const available = new Set(models.filter((model) => model.available !== false && !model.missing).map((model) => model.key).filter(Boolean));
+  return {
+    configured,
+    unavailable: configured.filter((model) => !available.has(model)),
+    defaultModel: models.find((model) => model.tags?.includes("default"))?.key,
+  };
+}
+
+export function loadOpenClawModels(): OpenClawModel[] {
+  const raw = execFileSync("openclaw", ["models", "list", "--json"], { encoding: "utf8" });
+  const parsed = JSON.parse(raw) as { models?: OpenClawModel[] };
+  return parsed.models || [];
+}
 
 export function normalizeSubagentTier(value: string | undefined): string {
   const policy = loadModelPolicy();
@@ -31,7 +55,26 @@ export function runModelSelectCli(args: string[]): void {
   const cmd = args[0];
   if (!cmd || cmd === "--help" || cmd === "-h") {
     const policy = loadModelPolicy();
-    console.log(`ocx model — OpenClaw-specific model selection\n\nUsage:\n  ocx model subagent --tier high [--format model|json]\n\nPolicy file:\n  ${OCX_MODEL_POLICY_PATH}\n\nTiers:\n${Object.entries(policy.subagent).map(([tier, weights]) => `  ${tier}: ${weights.map(([model, weight]) => `${weight}% ${model}`).join(", ")}`).join("\n")}\n\nAliases:\n${Object.entries(policy.aliases).map(([alias, tier]) => `  ${alias} → ${tier}`).join("\n")}`);
+    console.log(`ocx model — OpenClaw-specific model selection\n\nUsage:\n  ocx model subagent --tier high [--format model|json]\n  ocx model check [--format text|json]\n\nPolicy file:\n  ${OCX_MODEL_POLICY_PATH}\n\nTiers:\n${Object.entries(policy.subagent).map(([tier, weights]) => `  ${tier}: ${weights.map(([model, weight]) => `${weight}% ${model}`).join(", ")}`).join("\n")}\n\nAliases:\n${Object.entries(policy.aliases).map(([alias, tier]) => `  ${alias} → ${tier}`).join("\n")}`);
+    return;
+  }
+  if (cmd === "check") {
+    try {
+      const result = checkModelPolicy(loadOpenClawModels());
+      if (argValue(args, "--format") === "json") {
+        console.log(JSON.stringify({ ...result, policyPath: OCX_MODEL_POLICY_PATH }, null, 2));
+      } else {
+        console.log(`Policy: ${OCX_MODEL_POLICY_PATH}`);
+        console.log(`OpenClaw default: ${result.defaultModel || "unknown"}`);
+        for (const model of result.configured) {
+          console.log(`${result.unavailable.includes(model) ? "❌" : "✅"} ${model}`);
+        }
+      }
+      if (result.unavailable.length) process.exitCode = 1;
+    } catch (error) {
+      console.error(`Unable to query OpenClaw models: ${error instanceof Error ? error.message : String(error)}`);
+      process.exitCode = 2;
+    }
     return;
   }
   if (cmd !== "subagent") {

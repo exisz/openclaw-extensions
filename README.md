@@ -96,6 +96,7 @@ When spawning subagents, use "{{ocx model subagent --tier high}}".
 ```
 
 Supported triggers are `always`, `interactive`, `cron`, and `subagent`.
+Set `enabled: false` in an override to disable an injection without deleting its packaged implementation.
 Later directories override earlier files with the same `id`:
 
 1. Package defaults: `injections/`

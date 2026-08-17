@@ -11,10 +11,10 @@ const HOME = process.env.HOME || "";
 
 type Logger = { warn?: (message: string) => void; info?: (message: string) => void };
 type InjectionTrigger = "always" | "interactive" | "cron" | "subagent";
-type Injection = { id: string; trigger: string; content: string };
+type Injection = { id: string; trigger: string; enabled: boolean; content: string };
 
 function parseFrontmatter(file: string, raw: string): Injection | null {
-  if (!raw.startsWith("---")) return { id: file.replace(/\.md$/, ""), trigger: "always", content: raw.trim() };
+  if (!raw.startsWith("---")) return { id: file.replace(/\.md$/, ""), trigger: "always", enabled: true, content: raw.trim() };
   const end = raw.indexOf("---", 3);
   if (end === -1) return null;
   const fmText = raw.slice(3, end).trim();
@@ -24,7 +24,7 @@ function parseFrontmatter(file: string, raw: string): Injection | null {
     const m = line.match(/^(\w[\w-]*)\s*:\s*(.+)$/);
     if (m) meta[m[1]] = m[2].trim();
   }
-  return { id: meta.id || file.replace(/\.md$/, ""), trigger: meta.trigger || "always", content: body };
+  return { id: meta.id || file.replace(/\.md$/, ""), trigger: meta.trigger || "always", enabled: meta.enabled !== "false", content: body };
 }
 
 function loadInjections(): Injection[] {
@@ -70,7 +70,7 @@ function classifyTrigger(ctx: any): InjectionTrigger {
 
 function getInjectionText(trigger: InjectionTrigger, logger: Logger): string {
   const parts = loadInjections()
-    .filter((inj) => inj.trigger === "always" || inj.trigger === trigger)
+    .filter((inj) => inj.enabled && (inj.trigger === "always" || inj.trigger === trigger))
     .map((inj) => expandOcxDirectives(inj.content, logger));
   if (!parts.length) return "";
   return `<ocx>\n${parts.join("\n\n")}\n</ocx>`;

@@ -9,7 +9,7 @@ const PACKAGE_ROOT = join(__dirname, "..");
 const HOME = process.env.HOME || "";
 function parseFrontmatter(file, raw) {
     if (!raw.startsWith("---"))
-        return { id: file.replace(/\.md$/, ""), trigger: "always", content: raw.trim() };
+        return { id: file.replace(/\.md$/, ""), trigger: "always", enabled: true, content: raw.trim() };
     const end = raw.indexOf("---", 3);
     if (end === -1)
         return null;
@@ -21,7 +21,7 @@ function parseFrontmatter(file, raw) {
         if (m)
             meta[m[1]] = m[2].trim();
     }
-    return { id: meta.id || file.replace(/\.md$/, ""), trigger: meta.trigger || "always", content: body };
+    return { id: meta.id || file.replace(/\.md$/, ""), trigger: meta.trigger || "always", enabled: meta.enabled !== "false", content: body };
 }
 function loadInjections() {
     ensureOcxWorkspace();
@@ -68,7 +68,7 @@ function classifyTrigger(ctx) {
 }
 function getInjectionText(trigger, logger) {
     const parts = loadInjections()
-        .filter((inj) => inj.trigger === "always" || inj.trigger === trigger)
+        .filter((inj) => inj.enabled && (inj.trigger === "always" || inj.trigger === trigger))
         .map((inj) => expandOcxDirectives(inj.content, logger));
     if (!parts.length)
         return "";

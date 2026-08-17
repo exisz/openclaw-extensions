@@ -88,11 +88,11 @@ Injection files use Markdown frontmatter:
 
 ```markdown
 ---
-id: subagent-model
+id: operational-policy
 trigger: interactive
 ---
 
-When spawning subagents, use "{{ocx model subagent --tier high}}".
+Add the operational guidance here.
 ```
 
 Supported triggers are `always`, `interactive`, `cron`, and `subagent`.
@@ -101,21 +101,6 @@ Later directories override earlier files with the same `id`:
 1. Package defaults: `injections/`
 2. Legacy user overrides: `~/.openclaw/ocx/injections/`
 3. Current user overrides: `~/.openclaw/.ocx/injections/`
-
-The plugin expands `{{ocx model subagent --tier <name>}}` using the weighted
-policy in `~/.openclaw/.ocx/model-policy.json`. The `ocx model` command uses
-the same policy:
-
-```bash
-ocx model subagent --tier high
-ocx model subagent --tier low --format json
-ocx model check
-```
-
-`ocx model check` reads `openclaw models list --json`, prints the current
-OpenClaw default, and exits non-zero if any model referenced by the weighted
-subagent policy is unavailable. Use it after model/provider upgrades before
-starting new agent sessions.
 
 ## Frequency Tiers
 

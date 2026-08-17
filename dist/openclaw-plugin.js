@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { pickSubagentModel } from "./model-select.js";
 import { ensureOcxWorkspace, OCX_INJECTIONS_DIR } from "./workspace.js";
+const OCX_DIRECTIVE_RE = /\{\{ocx\s+([^}]+)\}\}/g;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = join(__dirname, "..");
 const HOME = process.env.HOME || "";
@@ -44,6 +46,18 @@ function loadInjections() {
     }
     return out;
 }
+function expandOcxDirectives(content, logger) {
+    return content.replace(OCX_DIRECTIVE_RE, (_match, argsRaw) => {
+        const args = argsRaw.trim().split(/\s+/);
+        if (args[0] === "model" && args[1] === "subagent") {
+            const tierIdx = args.indexOf("--tier");
+            const tier = tierIdx >= 0 ? args[tierIdx + 1] : undefined;
+            return pickSubagentModel(tier).model;
+        }
+        logger.warn?.(`ocx injection: unknown directive {{ocx ${argsRaw}}}`);
+        return `<!-- unknown ocx directive: ${argsRaw.replace(/-->/g, "--〉")} -->`;
+    });
+}
 function classifyTrigger(ctx) {
     if (ctx?.trigger === "cron")
         return "cron";
@@ -52,10 +66,10 @@ function classifyTrigger(ctx) {
         return "subagent";
     return "interactive";
 }
-function getInjectionText(trigger) {
+function getInjectionText(trigger, logger) {
     const parts = loadInjections()
         .filter((inj) => inj.trigger === "always" || inj.trigger === trigger)
-        .map((inj) => inj.content);
+        .map((inj) => expandOcxDirectives(inj.content, logger));
     if (!parts.length)
         return "";
     return `<ocx>\n${parts.join("\n\n")}\n</ocx>`;
@@ -67,11 +81,11 @@ const plugin = {
     configSchema: { parse: () => ({}) },
     register(api) {
         api.on("before_prompt_build", (_event, ctx) => {
-            const injectable = getInjectionText(classifyTrigger(ctx));
+            const injectable = getInjectionText(classifyTrigger(ctx), api.logger || console);
             return injectable ? { appendSystemContext: injectable } : {};
         }, { priority: 6 });
         ensureOcxWorkspace();
-        api.logger?.info?.("openclaw-extensions: registered (workspace prompt injections)");
+        api.logger?.info?.("openclaw-extensions: registered (workspace prompt injections + workspace model selector)");
     },
 };
 export default plugin;

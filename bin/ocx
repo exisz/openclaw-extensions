@@ -42,6 +42,9 @@ case "$subcmd" in
         ;;
     esac
     ;;
+  model)
+    exec node "$OCX_CODE/dist/model-select.js" "$@"
+    ;;
   saga)
     exec node "$OCX_CODE/dist/saga.js" "$@"
     ;;
@@ -61,6 +64,7 @@ case "$subcmd" in
     echo ""
     echo "Subcommands:"
     echo "  cron         Cron frequency management (up/down/link)"
+    echo "  model        Select or check OpenClaw-specific models for subagents"
     echo "  saga         Staged prompt executor (start/submit/current/status/export)"
     echo "  model-debug  Diagnose model call failures for an agent/channel"
     echo "  doctor       Validate OpenClaw config (model refs, legacy values)"
